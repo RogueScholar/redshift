@@ -95,7 +95,7 @@ note are:
 5. Discussion will ensue. If you are not prepared to partake in the discussion
    or further improve your patch for inclusion, please say so and someone else
    may be able to take on responsibility for your patch. Otherwise we will
-   assume that you will be open to critisism and suggestions for improvements
+   assume that you will be open to criticism and suggestions for improvements
    and that you will take responsibility for further improving the patch. You
    can add further commits to your topic branch and they will automatically be
    added to the pull request when you push them to Github.
