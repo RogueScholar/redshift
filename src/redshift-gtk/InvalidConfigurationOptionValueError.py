@@ -26,8 +26,15 @@ Redshift's built-in C-based option parser, is invalid.
 
 
 class InvalidConfigurationOptionValueError(Exception):
-    def __init__(self, file_path, section, option, invalid_value,
-                 correct_values=[], additional_explanation=''):
+    def __init__(
+        self,
+        file_path,
+        section,
+        option,
+        invalid_value,
+        correct_values=[],
+        additional_explanation="",
+    ):
         self.file_path = file_path
         self.section = section
         self.option = option
@@ -36,23 +43,25 @@ class InvalidConfigurationOptionValueError(Exception):
         self.additional_explanation = additional_explanation
 
     def __str__(self):
-        message = 'Invalid configuration option value detected for ' \
-            'configuration option "%s" in section "%s" of file "%s": ' \
-            '"%s"' % (self.option, self.section, self.file_path,
-                      self.invalid_value)
+        message = (
+            "Invalid configuration option value detected for "
+            'configuration option "%s" in section "%s" of file "%s": '
+            '"%s"' % (self.option, self.section, self.file_path, self.invalid_value)
+        )
         if self.correct_values:
             correct_values_strings = list(
                 map(lambda value: '"%s"' % value, self.correct_values)
             )
-            message += ' (correct values would be %s)' % \
-                ', '.join(correct_values_strings)
+            message += " (correct values would be %s)" % ", ".join(
+                correct_values_strings
+            )
 
-        message += '.'
+        message += "."
 
         if self.additional_explanation:
-            message += ' ' + self.additional_explanation
+            message += " " + self.additional_explanation
 
-        if not message.endswith('.'):
-            message += '.'
+        if not message.endswith("."):
+            message += "."
 
         return message
