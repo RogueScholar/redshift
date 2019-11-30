@@ -1,5 +1,5 @@
-
-SUBDIRS = src data po
+AUTOMAKE_OPTIONS = foreign
+SUBDIRS = src po
 ACLOCAL_AMFLAGS = -I m4
 
 # Install systemd user unit files locally for distcheck

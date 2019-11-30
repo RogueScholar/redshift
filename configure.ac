@@ -1,17 +1,16 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
-
 AC_PREREQ([2.69])
 AC_INIT([redshift], [1.12.1], [https://github.com/jonls/redshift/issues])
 AC_CONFIG_SRCDIR([src/redshift.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign subdir-objects dist-xz])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Checks for programs.
 AC_PROG_CC_C99
+gl_EARLY
 AC_PROG_LIBTOOL
 AC_PROG_MKDIR_P
 AC_PROG_OBJC # For macOS support modules
@@ -369,6 +368,7 @@ AS_IF([test "x$enable_apparmor" != xno], [
 ])
 AM_CONDITIONAL([ENABLE_APPARMOR], [test "x$enable_apparmor" != xno])
 
+gl_INIT
 
 # Checks for header files.
 AC_CHECK_HEADERS([locale.h stdint.h stdlib.h string.h unistd.h signal.h])

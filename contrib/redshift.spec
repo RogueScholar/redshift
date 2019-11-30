@@ -1,5 +1,5 @@
 Name: redshift
-Version: 1.12
+Version: 1.12.1
 Release: 1%{dist}
 Summary: Adjusts the color temperature of your screen according to time of day
 Group: Applications/System
@@ -29,7 +29,7 @@ This package provides the base program.
 %package -n %{name}-gtk
 Summary: GTK integration for Redshift
 Group: Applications/System
-BuildRequires: python3-devel >= 3.2
+BuildRequires: python3-devel >= 3.5
 BuildRequires: desktop-file-utils
 Requires: python3-gobject
 Requires: python3-pyxdg
@@ -83,7 +83,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_datadir}/appdata/redshift-gtk.appdata.xml
 
 %changelog
-* Sun Jul 8 2018 Ben van der Harg <benvanderharg@yandex.com> - 1.12.1
+* Fri Nov 29 2019 Peter J. Mello <admin@petermello.net> - 1.12.1-1
+- Update to 1.12.1
+* Sun Jul 8 2018 Ben van der Harg <benvanderharg@yandex.com> - 1.12-1
 - Update to 1.12
 * Sat Jan 2 2016 Jon Lund Steffensen <jonlst@gmail.com> - 1.11-1
 - Update to 1.11
