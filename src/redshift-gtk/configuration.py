@@ -70,28 +70,28 @@ class RedshiftConfiguration(object):
 
     # According to the Python doc of the configparser module
     _BOOLEAN_LIKE_OPTION_VALUE_MAPPING = {
-        '1' : True,  
-        '0' : False,
+        '1': True,
+        '0': False,
 
-        'yes' : True,    
-        'no'  : False, 
+        'yes': True,
+        'no': False,
 
-        'true'  : True, 
-        'false' : False, 
+        'true': True,
+        'false': False,
 
-        'on'  : True,
-        'off' : False
+        'on': True,
+        'off': False
     }
 
     def determine_configuration_file_path(self, args=[]):
         """Determine path of configuration file or None, if no file could be.
-        
+
         The parameter args is a list of command line arguments passed to
         redshift-gtk.
         """
         self._args = []
         if isinstance(args, list):
-            self._args = args[1:]            
+            self._args = args[1:]
 
         self._argument_parser = argparse.ArgumentParser()
         self._argument_parser.add_argument('-c', dest='configuration_file')
@@ -110,8 +110,8 @@ class RedshiftConfiguration(object):
 
         existing_configuration_file_path = None
         while method_index <= last_method_index \
-            and not existing_configuration_file_path:
-            method = configuration_file_path_methods[method_index]            
+                and not existing_configuration_file_path:
+            method = configuration_file_path_methods[method_index]
             existing_configuration_file_path = \
                 self._returns_existing_configuration_file(method)
             method_index += 1
@@ -124,13 +124,13 @@ class RedshiftConfiguration(object):
             raise ValueError('No file specified for parsing.')
 
         if not self._file_exists(configuration_file_path):
-            raise ValueError('File "%s" does not exist.' % \
-                configuration_file_path)
-         
+            raise ValueError('File "%s" does not exist.' %
+                             configuration_file_path)
+
         try:
             self._parsed_configuration = ConfigParser()
             self._parsed_configuration.read(configuration_file_path)
-            self._parsed_configuration_is_valid = True            
+            self._parsed_configuration_is_valid = True
         except Exception as ex:
             self._parsed_configuration = None
             self._parsed_configuration_is_valid = False
@@ -149,16 +149,16 @@ class RedshiftConfiguration(object):
               section).
         """
         if not items \
-            or (not isinstance(items, str) and not isinstance(items, tuple)) \
-            or not self._parsed_configuration:
+                or (not isinstance(items, str) and not isinstance(items, tuple)) \
+                or not self._parsed_configuration:
             raise KeyError(items)
 
         if isinstance(items, str):
-            return self._get_configuration_options_str(items, 
-                self._parsed_configuration)
+            return self._get_configuration_options_str(items,
+                                                       self._parsed_configuration)
         elif isinstance(items, tuple):
             return self._get_configuration_options_tuple(items,
-                self._parsed_configuration)
+                                                         self._parsed_configuration)
 
     def _is_parsed_configuration(self):
         """Helper to determine if this object represents a parsed 
@@ -187,7 +187,7 @@ class RedshiftConfiguration(object):
         except NoSectionError:
             raise KeyError(section)
 
-        return {option_name : option_value 
+        return {option_name: option_value
                 for option_name, option_value in section_options}
 
     def _get_configuration_options_tuple(self, sections, parsed_configuration):
@@ -197,8 +197,8 @@ class RedshiftConfiguration(object):
 
         for section_name in sections:
             configuration_options_for_section = \
-                self._get_configuration_options_str(section_name, 
-                    parsed_configuration)
+                self._get_configuration_options_str(section_name,
+                                                    parsed_configuration)
             result_options[section_name] = configuration_options_for_section
 
         return result_options
@@ -284,8 +284,8 @@ class RedshiftConfiguration(object):
     def _is_unix_like_platform(self):
         """Determine if the platform on which Redshift runs, is Unix-like."""
         non_unix_like_platforms = ['win32', 'cygwin']
-        
-        # We use sys.platform() instead of platform.system(), because, 
+
+        # We use sys.platform() instead of platform.system(), because,
         # according to the Python docs, it seems that it's non Unix-like return
         # values are limited to "win32" and "cygwin". We consider "darwin",
         # i.e., Mac OS X, as being Unix-like, too.
