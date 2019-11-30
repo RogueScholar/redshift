@@ -39,7 +39,7 @@ automatic location provider. An example configuration can be found in
 The configuration file should be saved in the following location depending on
 the platform:
 
-- Linux/macOS: `~/.config/redshift.conf`.
+- Linux/macOS: `~/.config/redshift/redshift.conf` (if the environment variable `XDG_CONFIG_HOME` is undefined) or `${XDG_CONFIG_HOME}/redshift/redshift.conf` (if `XDG_CONFIG_HOME` is defined).
 - Windows: Put `redshift.conf` in `%USERPROFILE%\AppData\Local\`
     (aka `%localappdata%`).
 
@@ -126,7 +126,7 @@ Latest builds from master branch
 - [Windows x86_64](https://ci.appveyor.com/api/projects/jonls/redshift/artifacts/redshift-windows-x86_64.zip?branch=master&job=Environment%3A+arch%3Dx86_64&pr=false)
 - [Windows x86](https://ci.appveyor.com/api/projects/jonls/redshift/artifacts/redshift-windows-i686.zip?branch=master&job=Environment%3A+arch%3Di686&pr=false)
 
-Building from source
---------------------
+Contributing / Building from source
+-----------------------------------
 
-See the file [CONTRIBUTING](CONTRIBUTING.md) for more details on building from source.
+See the file [CONTRIBUTING](CONTRIBUTING.md) for more details.

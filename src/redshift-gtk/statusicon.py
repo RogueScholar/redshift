@@ -1,16 +1,21 @@
 # statusicon.py -- GUI status icon source
 # This file is part of Redshift.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Redshift is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
+#
 # Redshift is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
-# along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
-# Copyright (c) 2013-2017  Jon Lund Steffensen <jonlst@gmail.com>
+# along with Redshift. If not, see <https://www.gnu.org/licenses/>.
+#
+# Copyright (c) 2013-2017 Jon Lund Steffensen <jonlst@gmail.com>
 """GUI status icon for Redshift.
 
 The run method will try to start an appindicator for Redshift. If the
@@ -26,6 +31,7 @@ from gi.repository import Gtk
 
 from . import defs
 from . import utils
+from .configuration import RedshiftConfiguration
 from .controller import RedshiftController
 
 gi.require_version("Gtk", "3.0")
@@ -46,6 +52,15 @@ class RedshiftStatusIcon(object):
         """Creates a new instance of the status icon."""
 
         self._controller = controller
+        use_appindicator_icon = self._config_use_appindicator_icon()
+        if not use_appindicator_icon:
+            global appindicator
+            appindicator = None
+
+        self.icon_theme = Gtk.IconTheme.get_default()
+        icon_name = 'redshift-status-on-symbolic'
+        if not self.icon_theme.has_icon(icon_name):
+            icon_name = 'redshift-status-on'
 
         if appindicator:
             # Create indicator
@@ -86,6 +101,8 @@ class RedshiftStatusIcon(object):
             (30, _("30 minutes")),
             (60, _("1 hour")),
             (120, _("2 hours")),
+            (240, _('4 hours')),
+            (480, _('8 hours'))
         ]:
             suspend_item = Gtk.MenuItem.new_with_label(label)
             suspend_item.connect("activate", self.suspend_cb, minutes)
@@ -163,6 +180,7 @@ class RedshiftStatusIcon(object):
         self._controller.connect("location-changed", self.location_change_cb)
         self._controller.connect("error-occured", self.error_occured_cb)
         self._controller.connect("stopped", self.controller_stopped_cb)
+        self.icon_theme.connect('changed', self.on_icon_theme_changed_cb)
 
         # Set info box text
         self.change_inhibited(self._controller.inhibited)
@@ -183,6 +201,30 @@ class RedshiftStatusIcon(object):
 
         # Initialize suspend timer
         self.suspend_timer = None
+
+    def _config_use_appindicator_icon(self):
+        """Determine if appindicator is configured to be used as status 
+        icon.
+        """
+        try:
+            configuration = RedshiftConfiguration()
+            config_file_path = configuration.determine_configuration_file_path(
+                sys.argv)
+            if config_file_path:
+                configuration.parse_configuration(config_file_path)
+            return configuration.use_appindicator_icon()
+        except Exception as ex:
+            error_dialog = Gtk.MessageDialog(
+                None,
+                Gtk.DialogFlags.MODAL,
+                Gtk.MessageType.ERROR,
+                Gtk.ButtonsType.CLOSE,
+                "",
+            )
+            error_dialog.set_markup(
+                "<b>Failed to parse configuration</b>\n<i>" + str(ex) + "</i>")
+            error_dialog.run()
+            return True
 
     def remove_suspend_timer(self):
         """Disable any previously set suspend timer."""
@@ -248,12 +290,23 @@ class RedshiftStatusIcon(object):
         self.info_dialog.hide()
         return True
 
+    def on_icon_theme_changed_cb(self, theme):
+        self.update_status_icon()
+
     def update_status_icon(self):
         """Update the status icon according to the internally recorded state.
 
         This should be called whenever the internally recorded state
         might have changed.
         """
+        if self._controller.inhibited:
+            icon_name = 'redshift-status-off-symbolic'
+        else:
+            icon_name = 'redshift-status-on-symbolic'
+
+        if not self.icon_theme.has_icon(icon_name):
+            icon_name = icon_name.replace('-symbolic', '')
+
         if appindicator:
             if not self._controller.inhibited:
                 self.indicator.set_icon("redshift-status-on")
