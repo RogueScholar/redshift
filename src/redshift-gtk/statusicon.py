@@ -23,6 +23,10 @@ The run method will try to start an appindicator for Redshift. If the
 appindicator module isn't present it will fall back to a GTK status icon.
 """
 
+from . import utils
+from . import defs
+from .controller import RedshiftController
+from gi.repository import Gtk, GLib
 import sys
 import signal
 import gettext
@@ -30,7 +34,6 @@ import gettext
 import gi
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import Gtk, GLib
 
 try:
     gi.require_version('AppIndicator3', '0.1')
@@ -38,9 +41,6 @@ try:
 except (ImportError, ValueError):
     appindicator = None
 
-from .controller import RedshiftController
-from . import defs
-from . import utils
 
 _ = gettext.gettext
 
@@ -75,7 +75,7 @@ class RedshiftStatusIcon(object):
             self.color_temperature_item = \
                 Gtk.MenuItem.new_with_label(_('Color temperature'))
             self.period_item = Gtk.MenuItem.new_with_label(_('Period'))
-            self.status_menu.append(self.color_temperature_item)            
+            self.status_menu.append(self.color_temperature_item)
             self.status_menu.append(self.period_item)
             self.status_menu.append(Gtk.SeparatorMenuItem.new())
 
