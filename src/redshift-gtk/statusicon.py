@@ -30,13 +30,11 @@ from .controller import RedshiftController
 
 gi.require_version("Gtk", "3.0")
 
-
 try:
     gi.require_version("AppIndicator3", "0.1")
     from gi.repository import AppIndicator3 as appindicator
 except (ImportError, ValueError):
     appindicator = None
-
 
 _ = gettext.gettext
 
@@ -70,8 +68,7 @@ class RedshiftStatusIcon(object):
         # the status icon, as AppIndicator3 does not support tooltips
         if appindicator:
             self.color_temperature_item = Gtk.MenuItem.new_with_label(
-                _("Color temperature")
-            )
+                _("Color temperature"))
             self.period_item = Gtk.MenuItem.new_with_label(_("Period"))
             self.status_menu.append(self.color_temperature_item)
             self.status_menu.append(self.period_item)
@@ -161,7 +158,8 @@ class RedshiftStatusIcon(object):
         # Setup signals to property changes
         self._controller.connect("inhibit-changed", self.inhibit_change_cb)
         self._controller.connect("period-changed", self.period_change_cb)
-        self._controller.connect("temperature-changed", self.temperature_change_cb)
+        self._controller.connect("temperature-changed",
+                                 self.temperature_change_cb)
         self._controller.connect("location-changed", self.location_change_cb)
         self._controller.connect("error-occured", self.error_occured_cb)
         self._controller.connect("stopped", self.controller_stopped_cb)
@@ -207,7 +205,8 @@ class RedshiftStatusIcon(object):
         self.remove_suspend_timer()
 
         # If redshift was already disabled we reenable it nonetheless.
-        self.suspend_timer = GLib.timeout_add_seconds(minutes * 60, self.reenable_cb)
+        self.suspend_timer = GLib.timeout_add_seconds(minutes * 60,
+                                                      self.reenable_cb)
 
     def reenable_cb(self):
         """Callback to reenable redshift when a suspend timer expires."""
@@ -216,9 +215,8 @@ class RedshiftStatusIcon(object):
     def popup_menu_cb(self, widget, button, time, data=None):
         """Callback when the popup menu on the status icon has to open."""
         self.status_menu.show_all()
-        self.status_menu.popup(
-            None, None, Gtk.StatusIcon.position_menu, self.status_icon, button, time
-        )
+        self.status_menu.popup(None, None, Gtk.StatusIcon.position_menu,
+                               self.status_icon, button, time)
 
     def toggle_cb(self, widget, data=None):
         """Callback when a request to toggle redshift was made."""
@@ -293,7 +291,8 @@ class RedshiftStatusIcon(object):
             Gtk.ButtonsType.CLOSE,
             "",
         )
-        error_dialog.set_markup("<b>Failed to run Redshift</b>\n<i>" + error + "</i>")
+        error_dialog.set_markup("<b>Failed to run Redshift</b>\n<i>" + error +
+                                "</i>")
         error_dialog.run()
 
         # Quit when the model dialog is closed
@@ -309,45 +308,40 @@ class RedshiftStatusIcon(object):
         self.update_status_icon()
         self.toggle_item.set_active(not inhibited)
         self.status_label.set_markup(
-            _("<b>Status:</b> {}").format(_("Disabled") if inhibited else _("Enabled"))
-        )
+            _("<b>Status:</b> {}").format(
+                _("Disabled") if inhibited else _("Enabled")))
 
     def change_temperature(self, temperature):
         """Change interface to new temperature."""
-        self.temperature_label.set_markup(
-            "<b>{}:</b> {}K".format(_("Color temperature"), temperature)
-        )
+        self.temperature_label.set_markup("<b>{}:</b> {}K".format(
+            _("Color temperature"), temperature))
         self.update_tooltip_text()
 
     def change_period(self, period):
         """Change interface to new period."""
-        self.period_label.set_markup("<b>{}:</b> {}".format(_("Period"), period))
+        self.period_label.set_markup("<b>{}:</b> {}".format(
+            _("Period"), period))
         self.update_tooltip_text()
 
     def change_location(self, location):
         """Change interface to new location."""
-        self.location_label.set_markup(
-            "<b>{}:</b> {}, {}".format(_("Location"), *location)
-        )
+        self.location_label.set_markup("<b>{}:</b> {}, {}".format(
+            _("Location"), *location))
 
     def update_tooltip_text(self):
         """Update text of tooltip status icon."""
         if appindicator:
-            self.color_temperature_item.set_label(
-                "{}: {}K".format(_("Color temperature"), self._controller.temperature)
-            )
-            self.period_item.set_label(
-                "{}: {}".format(_("Period"), self._controller.period)
-            )
+            self.color_temperature_item.set_label("{}: {}K".format(
+                _("Color temperature"), self._controller.temperature))
+            self.period_item.set_label("{}: {}".format(
+                _("Period"), self._controller.period))
         else:
-            self.status_icon.set_tooltip_text(
-                "{}: {}K, {}: {}".format(
-                    _("Color temperature"),
-                    self._controller.temperature,
-                    _("Period"),
-                    self._controller.period,
-                )
-            )
+            self.status_icon.set_tooltip_text("{}: {}K, {}: {}".format(
+                _("Color temperature"),
+                self._controller.temperature,
+                _("Period"),
+                self._controller.period,
+            ))
 
     def autostart_cb(self, widget, data=None):
         """Callback when a request to toggle autostart is made."""
@@ -382,8 +376,10 @@ def run():
         return False
 
     # Install signal handlers
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, terminate_child, None)
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, terminate_child, None)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM,
+                         terminate_child, None)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, terminate_child,
+                         None)
 
     try:
         # Create status icon
