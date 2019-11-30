@@ -1,5 +1,6 @@
 /* config-ini.c -- INI config file parser
    This file is part of Redshift.
+   SPDX-License-Identifier: GPL-3.0-or-later
 
    Redshift is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -8,14 +9,19 @@
 
    Redshift is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
+   along with Redshift. If not, see <https://www.gnu.org/licenses/>.
 
-   Copyright (c) 2010  Jon Lund Steffensen <jonlst@gmail.com>
+   Copyright (c) 2010-2018 Jon Lund Steffensen <jonlst@gmail.com>
+   Copyright (c) 2019 Peter J. Mello <admin@petermello.net>
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdio.h>
@@ -24,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #ifndef _WIN32
 #include <pwd.h>
 #endif
@@ -59,6 +66,7 @@ static FILE *open_config_file(const char *filepath) {
 
     if (f == NULL && (env = getenv("XDG_CONFIG_HOME")) != NULL &&
         env[0] != '\0') {
+      /* Fall back to formerly used path. */
       snprintf(cp, sizeof(cp), "%s/redshift.conf", env);
       f = fopen(cp, "r");
     }
@@ -70,6 +78,7 @@ static FILE *open_config_file(const char *filepath) {
     }
 #endif
     if (f == NULL && (env = getenv("HOME")) != NULL && env[0] != '\0') {
+      /* Fall back to formerly used path. */
       snprintf(cp, sizeof(cp), "%s/.config/redshift.conf", env);
       f = fopen(cp, "r");
     }
@@ -80,6 +89,7 @@ static FILE *open_config_file(const char *filepath) {
       if (pwd != NULL) {
         char *home = pwd->pw_dir;
         if ((home != NULL) && (*home != '\0')) {
+          /* Fall back to formerly used path. */
           snprintf(cp, sizeof(cp), "%s/.config/redshift.conf", home);
           f = fopen(cp, "r");
         } else {
@@ -121,6 +131,7 @@ static FILE *open_config_file(const char *filepath) {
     }
 
     if (f == NULL) {
+      /* Fall back to formerly used path. */
       snprintf(cp, sizeof(cp), "%s/redshift.conf", "/etc");
       f = fopen(cp, "r");
     }

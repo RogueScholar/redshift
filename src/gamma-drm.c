@@ -15,13 +15,17 @@
    along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
 
    Copyright (c) 2014  Mattias Andrée <maandree@member.fsf.org>
+   Copyright (c) 2017  Jon Lund Steffensen <jonlst@gmail.com>
 */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <alloca.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -38,29 +42,54 @@
   #define O_CLOEXEC  02000000
 #endif
 
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+
 #include "gamma-drm.h"
 #include "colorramp.h"
 
 
-int
-drm_init(drm_state_t *state)
+typedef struct {
+	int crtc_num;
+	int crtc_id;
+	int gamma_size;
+	uint16_t* r_gamma;
+	uint16_t* g_gamma;
+	uint16_t* b_gamma;
+} drm_crtc_state_t;
+
+typedef struct {
+	int card_num;
+	int crtc_num;
+	int fd;
+	drmModeRes* res;
+	drm_crtc_state_t* crtcs;
+} drm_state_t;
+
+
+static int
+drm_init(drm_state_t **state)
 {
 	/* Initialize state. */
-	state->card_num = 0;
-	state->crtc_num = -1;
-	state->fd = -1;
-	state->res = NULL;
-	state->crtcs = NULL;
+	*state = malloc(sizeof(drm_state_t));
+	if (*state == NULL) return -1;
+
+	drm_state_t *s = *state;
+	s->card_num = 0;
+	s->crtc_num = -1;
+	s->fd = -1;
+	s->res = NULL;
+	s->crtcs = NULL;
 
 	return 0;
 }
 
-int
+static int
 drm_start(drm_state_t *state)
 {
 	/* Acquire access to a graphics card. */
 	long maxlen = strlen(DRM_DIR_NAME) + strlen(DRM_DEV_NAME) + 10;
-	char *pathname = alloca(maxlen * sizeof(char));
+	char pathname[maxlen];
 
 	sprintf(pathname, DRM_DEV_NAME, DRM_DIR_NAME, state->card_num);
 
@@ -69,6 +98,8 @@ drm_start(drm_state_t *state)
 		/* TODO check if access permissions, normally root or
 		        membership of the video group is required. */
 		perror("open");
+		fprintf(stderr, _("Failed to open DRM device: %s\n"),
+			pathname);
 		return -1;
 	}
 
@@ -171,7 +202,7 @@ drm_start(drm_state_t *state)
 	return 0;
 }
 
-void
+static void
 drm_restore(drm_state_t *state)
 {
 	drm_crtc_state_t *crtcs = state->crtcs;
@@ -184,14 +215,13 @@ drm_restore(drm_state_t *state)
 	}
 }
 
-void
+static void
 drm_free(drm_state_t *state)
 {
 	if (state->crtcs != NULL) {
 		drm_crtc_state_t *crtcs = state->crtcs;
 		while (crtcs->crtc_num >= 0) {
-			if (crtcs->r_gamma != NULL)
-				free(crtcs->r_gamma);
+			free(crtcs->r_gamma);
 			crtcs->crtc_num = -1;
 			crtcs++;
 		}
@@ -206,9 +236,11 @@ drm_free(drm_state_t *state)
 		close(state->fd);
 		state->fd = -1;
 	}
+
+	free(state);
 }
 
-void
+static void
 drm_print_help(FILE *f)
 {
 	fputs(_("Adjust gamma ramps with Direct Rendering Manager.\n"), f);
@@ -221,7 +253,7 @@ drm_print_help(FILE *f)
 	fputs("\n", f);
 }
 
-int
+static int
 drm_set_option(drm_state_t *state, const char *key, const char *value)
 {
 	if (strcasecmp(key, "card") == 0) {
@@ -240,8 +272,9 @@ drm_set_option(drm_state_t *state, const char *key, const char *value)
 	return 0;
 }
 
-int
-drm_set_temperature(drm_state_t *state, const color_setting_t *setting)
+static int
+drm_set_temperature(
+	drm_state_t *state, const color_setting_t *setting, int preserve)
 {
 	drm_crtc_state_t *crtcs = state->crtcs;
 	int last_gamma_size = 0;
@@ -288,3 +321,15 @@ drm_set_temperature(drm_state_t *state, const color_setting_t *setting)
 
 	return 0;
 }
+
+
+const gamma_method_t drm_gamma_method = {
+	"drm", 0,
+	(gamma_method_init_func *)drm_init,
+	(gamma_method_start_func *)drm_start,
+	(gamma_method_free_func *)drm_free,
+	(gamma_method_print_help_func *)drm_print_help,
+	(gamma_method_set_option_func *)drm_set_option,
+	(gamma_method_restore_func *)drm_restore,
+	(gamma_method_set_temperature_func *)drm_set_temperature
+};
