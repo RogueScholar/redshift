@@ -99,13 +99,11 @@ class RedshiftConfiguration(object):
         last_method_index = len(configuration_file_path_methods) - 1
 
         existing_configuration_file_path = None
-        while (
-            method_index <= last_method_index and not existing_configuration_file_path
-        ):
+        while (method_index <= last_method_index
+               and not existing_configuration_file_path):
             method = configuration_file_path_methods[method_index]
             existing_configuration_file_path = self._returns_existing_configuration_file(
-                method
-            )
+                method)
             method_index += 1
 
         return existing_configuration_file_path
@@ -116,7 +114,8 @@ class RedshiftConfiguration(object):
             raise ValueError("No file specified for parsing.")
 
         if not self._file_exists(configuration_file_path):
-            raise ValueError('File "%s" does not exist.' % configuration_file_path)
+            raise ValueError('File "%s" does not exist.' %
+                             configuration_file_path)
 
         try:
             self._parsed_configuration = ConfigParser()
@@ -139,21 +138,17 @@ class RedshiftConfiguration(object):
               dictionary (key: section name, value: option dictionary for the
               section).
         """
-        if (
-            not items
-            or (not isinstance(items, str) and not isinstance(items, tuple))
-            or not self._parsed_configuration
-        ):
+        if (not items or
+            (not isinstance(items, str) and not isinstance(items, tuple))
+                or not self._parsed_configuration):
             raise KeyError(items)
 
         if isinstance(items, str):
             return self._get_configuration_options_str(
-                items, self._parsed_configuration
-            )
+                items, self._parsed_configuration)
         elif isinstance(items, tuple):
             return self._get_configuration_options_tuple(
-                items, self._parsed_configuration
-            )
+                items, self._parsed_configuration)
 
     def _is_parsed_configuration(self):
         """Helper to determine if this object represents a parsed 
@@ -182,7 +177,8 @@ class RedshiftConfiguration(object):
             raise KeyError(section)
 
         return {
-            option_name: option_value for option_name, option_value in section_options
+            option_name: option_value
+            for option_name, option_value in section_options
         }
 
     def _get_configuration_options_tuple(self, sections, parsed_configuration):
@@ -192,8 +188,7 @@ class RedshiftConfiguration(object):
 
         for section_name in sections:
             configuration_options_for_section = self._get_configuration_options_str(
-                section_name, parsed_configuration
-            )
+                section_name, parsed_configuration)
             result_options[section_name] = configuration_options_for_section
 
         return result_options
