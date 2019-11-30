@@ -1,5 +1,5 @@
 
-SUBDIRS = src po
+SUBDIRS = src data po
 ACLOCAL_AMFLAGS = -I m4
 
 # Install systemd user unit files locally for distcheck
@@ -71,11 +71,8 @@ install-data-hook:
 uninstall-hook:
 	$(UPDATE_ICON_CACHE);
 
-# We would preferable use @INTLTOOL_DESKTOP_RULE@ here but
-# sadly it is broken for out-of-tree builds.
-%.desktop: %.desktop.in $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po)
-	$(AM_V_GEN)$(MKDIR_P) $(@D);
-	$(INTLTOOL_V_MERGE)LC_ALL=C $(INTLTOOL_MERGE) $(INTLTOOL_V_MERGE_OPTIONS) -d -u -c $(top_builddir)/po/.intltool-merge-cache $(top_srcdir)/po $< $@
+%.desktop: %.desktop.in
+	$(AM_V_GEN)$(MSGFMT) --desktop --template $< -d $(top_srcdir)/po -o $@
 endif
 
 
@@ -98,11 +95,8 @@ if ENABLE_GUI
 appdatadir = @datadir@/appdata
 appdata_DATA = $(APPDATA_IN_FILES:.xml.in=.xml)
 
-# We would preferable use @INTLTOOL_XML_RULE@ here but
-# sadly it is broken for out-of-tree builds.
-%.xml: %.xml.in $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po)
-	$(AM_V_GEN)$(MKDIR_P) $(@D);
-	$(INTLTOOL_V_MERGE)LC_ALL=C $(INTLTOOL_MERGE) $(INTLTOOL_V_MERGE_OPTIONS) -x -u -c $(top_builddir)/po/.intltool-merge-cache $(top_srcdir)/po $< $@
+%.xml: %.xml.in
+	$(AM_V_GEN)$(MSGFMT) --xml --template $< -d $(top_srcdir)/po -o $@
 endif
 
 

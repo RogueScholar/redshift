@@ -17,8 +17,6 @@ AC_PROG_MKDIR_P
 AC_PROG_OBJC # For macOS support modules
 AC_LANG([C])
 
-AC_PROG_INTLTOOL([0.50])
-
 AC_CANONICAL_HOST
 
 # Test host platform
@@ -53,7 +51,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])], [
 AC_LANG_POP([Objective C])
 
 # Checks for libraries.
-AM_GNU_GETTEXT_VERSION([0.17])
+AM_GNU_GETTEXT_VERSION([0.18.3])
 AM_GNU_GETTEXT([external])
 
 GETTEXT_PACKAGE=redshift
