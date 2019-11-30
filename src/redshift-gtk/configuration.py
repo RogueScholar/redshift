@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-
 # configuration.py -- Determine and parse Redshift configuration
 # This file is part of Redshift.
-
 # Redshift is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
 # Redshift is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
 # You should have received a copy of the GNU General Public License
 # along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
-
 # Copyright (c) 2018  Florian Rademacher <florian.rademacher@fh-dortmund.de>
-
-
 """Parser for Redshift configuration files.
 
 The parser will first try to determine the path of Redshift's configuration 
@@ -50,14 +43,14 @@ If one of the cases above applies and an existing configuration file could be
 determined, the parser will parse it and provide callers with the parsed
 configuration entries.
 """
-
 import argparse
 import os
 import platform
 import sys
+from configparser import ConfigParser
+from configparser import NoSectionError
 
 from .InvalidConfigurationOptionValueError import *
-from configparser import ConfigParser, NoSectionError
 
 try:
     from xdg.BaseDirectory import xdg_config_home, xdg_config_dirs
