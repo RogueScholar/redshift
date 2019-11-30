@@ -28,6 +28,9 @@ addons:
       - libgeoclue-2-dev
       - libgconf2-dev
       - libglib2.0-dev
+      # GUI config tool
+      - libgtk-3-dev
+      - libxml2-utils
       # GUI
       - python3-dev
 
