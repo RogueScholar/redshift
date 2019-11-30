@@ -1,5 +1,6 @@
 /* gamma-randr.c -- X RANDR gamma adjustment source
    This file is part of Redshift.
+   SPDX-License-Identifier: GPL-3.0-or-later
 
    Redshift is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -8,43 +9,42 @@
 
    Redshift is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
+   along with Redshift. If not, see <https://www.gnu.org/licenses/>.
 
-   Copyright (c) 2010-2017  Jon Lund Steffensen <jonlst@gmail.com>
+   Copyright (c) 2010-2017 Jon Lund Steffensen <jonlst@gmail.com>
 */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef ENABLE_NLS
-# include <libintl.h>
-# define _(s) gettext(s)
+#include <libintl.h>
+#define _(s) gettext(s)
 #else
-# define _(s) s
+#define _(s) s
 #endif
 
-#include <xcb/xcb.h>
 #include <xcb/randr.h>
+#include <xcb/xcb.h>
 
+#include "colorramp.h"
 #include "gamma-randr.h"
 #include "redshift.h"
-#include "colorramp.h"
 
 
-#define RANDR_VERSION_MAJOR  1
-#define RANDR_VERSION_MINOR  3
-
+#define RANDR_VERSION_MAJOR 1
+#define RANDR_VERSION_MINOR 3
 
 typedef struct {
 	xcb_randr_crtc_t crtc;
@@ -196,7 +196,9 @@ randr_start(randr_state_t *state)
 			fprintf(stderr, _("`%s' returned error %d\n"),
 				"RANDR Get CRTC Gamma Size",
 				error->error_code);
-			return -1;
+			state->crtc_count = i;
+			break;
+			//return -1;
 		}
 
 		unsigned int ramp_size = gamma_size_reply->size;
