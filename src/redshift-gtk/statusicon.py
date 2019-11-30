@@ -1,46 +1,46 @@
 # statusicon.py -- GUI status icon source
 # This file is part of Redshift.
-
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Redshift is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
+#
 # Redshift is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
-
-# Copyright (c) 2013-2017  Jon Lund Steffensen <jonlst@gmail.com>
-
-
+# along with Redshift. If not, see <https://www.gnu.org/licenses/>.
+#
+# Copyright (c) 2013-2017 Jon Lund Steffensen <jonlst@gmail.com>
 """GUI status icon for Redshift.
 
 The run method will try to start an appindicator for Redshift. If the
 appindicator module isn't present it will fall back to a GTK status icon.
 """
-
-import sys
-import signal
 import gettext
+import signal
+import sys
 
 import gi
-gi.require_version('Gtk', '3.0')
+from gi.repository import GLib
+from gi.repository import Gtk
 
-from gi.repository import Gtk, GLib
+from . import defs
+from . import utils
+from .configuration import RedshiftConfiguration
+from .controller import RedshiftController
+
+gi.require_version("Gtk", "3.0")
 
 try:
-    gi.require_version('AppIndicator3', '0.1')
+    gi.require_version("AppIndicator3", "0.1")
     from gi.repository import AppIndicator3 as appindicator
 except (ImportError, ValueError):
     appindicator = None
-
-from .controller import RedshiftController
-from . import defs
-from . import utils
 
 _ = gettext.gettext
 
@@ -52,6 +52,10 @@ class RedshiftStatusIcon(object):
         """Creates a new instance of the status icon."""
 
         self._controller = controller
+        use_appindicator_icon = self._config_use_appindicator_icon()
+        if not use_appindicator_icon:
+            global appindicator
+            appindicator = None
 
         self.icon_theme = Gtk.IconTheme.get_default()
         icon_name = 'redshift-status-on-symbolic'
@@ -61,66 +65,69 @@ class RedshiftStatusIcon(object):
         if appindicator:
             # Create indicator
             self.indicator = appindicator.Indicator.new(
-                'redshift',
-                icon_name,
-                appindicator.IndicatorCategory.APPLICATION_STATUS)
+                "redshift",
+                "redshift-status-on",
+                appindicator.IndicatorCategory.APPLICATION_STATUS,
+            )
             self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         else:
             # Create status icon
             self.status_icon = Gtk.StatusIcon()
-            self.status_icon.set_from_icon_name(icon_name)
-            self.status_icon.set_tooltip_text('Redshift')
+            self.status_icon.set_from_icon_name("redshift-status-on")
+            self.status_icon.set_tooltip_text("Redshift")
 
         # Create popup menu
         self.status_menu = Gtk.Menu()
 
         # Add toggle action
-        self.toggle_item = Gtk.CheckMenuItem.new_with_label(_('Enabled'))
-        self.toggle_item.connect('activate', self.toggle_item_cb)
+        self.toggle_item = Gtk.CheckMenuItem.new_with_label(_("Enabled"))
+        self.toggle_item.connect("activate", self.toggle_item_cb)
         self.status_menu.append(self.toggle_item)
 
         # Add suspend menu
-        suspend_menu_item = Gtk.MenuItem.new_with_label(_('Suspend for'))
+        suspend_menu_item = Gtk.MenuItem.new_with_label(_("Suspend for"))
         suspend_menu = Gtk.Menu()
-        for minutes, label in [(30, _('30 minutes')),
-                               (60, _('1 hour')),
-                               (120, _('2 hours')),
-                               (240, _('4 hours')),
-                               (480, _('8 hours'))]:
+        for minutes, label in [
+            (30, _("30 minutes")),
+            (60, _("1 hour")),
+            (120, _("2 hours")),
+            (240, _('4 hours')),
+            (480, _('8 hours'))
+        ]:
             suspend_item = Gtk.MenuItem.new_with_label(label)
-            suspend_item.connect('activate', self.suspend_cb, minutes)
+            suspend_item.connect("activate", self.suspend_cb, minutes)
             suspend_menu.append(suspend_item)
         suspend_menu_item.set_submenu(suspend_menu)
         self.status_menu.append(suspend_menu_item)
 
         # Add autostart option
         if utils.supports_autostart():
-            autostart_item = Gtk.CheckMenuItem.new_with_label(_('Autostart'))
+            autostart_item = Gtk.CheckMenuItem.new_with_label(_("Autostart"))
             try:
                 autostart_item.set_active(utils.get_autostart())
             except IOError as strerror:
                 print(strerror)
-                autostart_item.set_property('sensitive', False)
+                autostart_item.set_property("sensitive", False)
             else:
-                autostart_item.connect('toggled', self.autostart_cb)
+                autostart_item.connect("toggled", self.autostart_cb)
             finally:
                 self.status_menu.append(autostart_item)
 
         # Add info action
-        info_item = Gtk.MenuItem.new_with_label(_('Info'))
-        info_item.connect('activate', self.show_info_cb)
+        info_item = Gtk.MenuItem.new_with_label(_("Info"))
+        info_item.connect("activate", self.show_info_cb)
         self.status_menu.append(info_item)
 
         # Add quit action
-        quit_item = Gtk.ImageMenuItem.new_with_label(_('Quit'))
-        quit_item.connect('activate', self.destroy_cb)
+        quit_item = Gtk.ImageMenuItem.new_with_label(_("Quit"))
+        quit_item.connect("activate", self.destroy_cb)
         self.status_menu.append(quit_item)
 
         # Create info dialog
-        self.info_dialog = Gtk.Window(title=_('Info'))
+        self.info_dialog = Gtk.Window(title=_("Info"))
         self.info_dialog.set_resizable(False)
-        self.info_dialog.set_property('border-width', 6)
-        self.info_dialog.connect('delete-event', self.close_info_dialog_cb)
+        self.info_dialog.set_property("border-width", 6)
+        self.info_dialog.connect("delete-event", self.close_info_dialog_cb)
 
         content_area = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.info_dialog.add(content_area)
@@ -150,19 +157,19 @@ class RedshiftStatusIcon(object):
         content_area.pack_start(self.period_label, True, True, 0)
         self.period_label.show()
 
-        self.close_button = Gtk.Button(label=_('Close'))
+        self.close_button = Gtk.Button(label=_("Close"))
         content_area.pack_start(self.close_button, True, True, 0)
-        self.close_button.connect('clicked', self.close_info_dialog_cb)
+        self.close_button.connect("clicked", self.close_info_dialog_cb)
         self.close_button.show()
 
         # Setup signals to property changes
-        self._controller.connect('inhibit-changed', self.inhibit_change_cb)
-        self._controller.connect('period-changed', self.period_change_cb)
-        self._controller.connect(
-            'temperature-changed', self.temperature_change_cb)
-        self._controller.connect('location-changed', self.location_change_cb)
-        self._controller.connect('error-occured', self.error_occured_cb)
-        self._controller.connect('stopped', self.controller_stopped_cb)
+        self._controller.connect("inhibit-changed", self.inhibit_change_cb)
+        self._controller.connect("period-changed", self.period_change_cb)
+        self._controller.connect("temperature-changed",
+                                 self.temperature_change_cb)
+        self._controller.connect("location-changed", self.location_change_cb)
+        self._controller.connect("error-occured", self.error_occured_cb)
+        self._controller.connect("stopped", self.controller_stopped_cb)
         self.icon_theme.connect('changed', self.on_icon_theme_changed_cb)
 
         # Set info box text
@@ -178,12 +185,36 @@ class RedshiftStatusIcon(object):
             self.indicator.set_menu(self.status_menu)
         else:
             # Connect signals for status icon and show
-            self.status_icon.connect('activate', self.toggle_cb)
-            self.status_icon.connect('popup-menu', self.popup_menu_cb)
+            self.status_icon.connect("activate", self.toggle_cb)
+            self.status_icon.connect("popup-menu", self.popup_menu_cb)
             self.status_icon.set_visible(True)
 
         # Initialize suspend timer
         self.suspend_timer = None
+
+    def _config_use_appindicator_icon(self):
+        """Determine if appindicator is configured to be used as status 
+        icon.
+        """
+        try:
+            configuration = RedshiftConfiguration()
+            config_file_path = configuration.determine_configuration_file_path(
+                sys.argv)
+            if config_file_path:
+                configuration.parse_configuration(config_file_path)
+            return configuration.use_appindicator_icon()
+        except Exception as ex:
+            error_dialog = Gtk.MessageDialog(
+                None,
+                Gtk.DialogFlags.MODAL,
+                Gtk.MessageType.ERROR,
+                Gtk.ButtonsType.CLOSE,
+                "",
+            )
+            error_dialog.set_markup(
+                "<b>Failed to parse configuration</b>\n<i>" + str(ex) + "</i>")
+            error_dialog.run()
+            return True
 
     def remove_suspend_timer(self):
         """Disable any previously set suspend timer."""
@@ -206,8 +237,8 @@ class RedshiftStatusIcon(object):
         self.remove_suspend_timer()
 
         # If redshift was already disabled we reenable it nonetheless.
-        self.suspend_timer = GLib.timeout_add_seconds(
-            minutes * 60, self.reenable_cb)
+        self.suspend_timer = GLib.timeout_add_seconds(minutes * 60,
+                                                      self.reenable_cb)
 
     def reenable_cb(self):
         """Callback to reenable redshift when a suspend timer expires."""
@@ -267,9 +298,15 @@ class RedshiftStatusIcon(object):
             icon_name = icon_name.replace('-symbolic', '')
 
         if appindicator:
-            self.indicator.set_icon(icon_name)
+            if not self._controller.inhibited:
+                self.indicator.set_icon("redshift-status-on")
+            else:
+                self.indicator.set_icon("redshift-status-off")
         else:
-            self.status_icon.set_from_icon_name(icon_name)
+            if not self._controller.inhibited:
+                self.status_icon.set_from_icon_name("redshift-status-on")
+            else:
+                self.status_icon.set_from_icon_name("redshift-status-off")
 
     # State update functions
     def inhibit_change_cb(self, controller, inhibit):
@@ -291,10 +328,14 @@ class RedshiftStatusIcon(object):
     def error_occured_cb(self, controller, error):
         """Callback when an error occurs in the controller."""
         error_dialog = Gtk.MessageDialog(
-            None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
-            Gtk.ButtonsType.CLOSE, '')
-        error_dialog.set_markup(
-            '<b>Failed to run Redshift</b>\n<i>' + error + '</i>')
+            None,
+            Gtk.DialogFlags.MODAL,
+            Gtk.MessageType.ERROR,
+            Gtk.ButtonsType.CLOSE,
+            "",
+        )
+        error_dialog.set_markup("<b>Failed to run Redshift</b>\n<i>" + error +
+                                "</i>")
         error_dialog.run()
 
         # Quit when the model dialog is closed
@@ -310,32 +351,35 @@ class RedshiftStatusIcon(object):
         self.update_status_icon()
         self.toggle_item.set_active(not inhibited)
         self.status_label.set_markup(
-            _('<b>Status:</b> {}').format(
-                _('Disabled') if inhibited else _('Enabled')))
+            _("<b>Status:</b> {}").format(
+                _("Disabled") if inhibited else _("Enabled")))
 
     def change_temperature(self, temperature):
         """Change interface to new temperature."""
-        self.temperature_label.set_markup(
-            '<b>{}:</b> {}K'.format(_('Color temperature'), temperature))
+        self.temperature_label.set_markup("<b>{}:</b> {}K".format(
+            _("Color temperature"), temperature))
         self.update_tooltip_text()
 
     def change_period(self, period):
         """Change interface to new period."""
-        self.period_label.set_markup(
-            '<b>{}:</b> {}'.format(_('Period'), period))
+        self.period_label.set_markup("<b>{}:</b> {}".format(
+            _("Period"), period))
         self.update_tooltip_text()
 
     def change_location(self, location):
         """Change interface to new location."""
-        self.location_label.set_markup(
-            '<b>{}:</b> {}, {}'.format(_('Location'), *location))
+        self.location_label.set_markup("<b>{}:</b> {}, {}".format(
+            _("Location"), *location))
 
     def update_tooltip_text(self):
         """Update text of tooltip status icon."""
         if not appindicator:
-            self.status_icon.set_tooltip_text('{}: {}K, {}: {}'.format(
-                _('Color temperature'), self._controller.temperature,
-                _('Period'), self._controller.period))
+            self.status_icon.set_tooltip_text("{}: {}K, {}: {}".format(
+                _("Color temperature"),
+                self._controller.temperature,
+                _("Period"),
+                self._controller.period,
+            ))
 
     def autostart_cb(self, widget, data=None):
         """Callback when a request to toggle autostart is made."""
@@ -351,15 +395,15 @@ class RedshiftStatusIcon(object):
 
 
 def run():
-    utils.setproctitle('redshift-gtk')
+    utils.setproctitle("redshift-gtk")
 
     # Internationalisation
-    gettext.bindtextdomain('redshift', defs.LOCALEDIR)
-    gettext.textdomain('redshift')
+    gettext.bindtextdomain("redshift", defs.LOCALEDIR)
+    gettext.textdomain("redshift")
 
-    for help_arg in ('-h', '--help'):
+    for help_arg in ("-h", "--help"):
         if help_arg in sys.argv:
-            print(_('Please run `redshift -h` for help output.'))
+            print(_("Please run `redshift -h` for help output."))
             sys.exit(-1)
 
     # Create redshift child process controller
@@ -372,8 +416,8 @@ def run():
     # Install signal handlers
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM,
                          terminate_child, None)
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT,
-                         terminate_child, None)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, terminate_child,
+                         None)
 
     try:
         # Create status icon

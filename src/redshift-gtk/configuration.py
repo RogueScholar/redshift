@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 # configuration.py -- Determine and parse Redshift configuration
 # This file is part of Redshift.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Redshift is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
+#
 # Redshift is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
-# along with Redshift.  If not, see <http://www.gnu.org/licenses/>.
-# Copyright (c) 2018  Florian Rademacher <florian.rademacher@fh-dortmund.de>
+# along with Redshift. If not, see <https://www.gnu.org/licenses/>.
+#
+# Copyright (c) 2018 Florian Rademacher <florian.rademacher@fh-dortmund.de>
 """Parser for Redshift configuration files.
 
 The parser will first try to determine the path of Redshift's configuration 
@@ -50,6 +55,8 @@ import sys
 from configparser import ConfigParser
 from configparser import NoSectionError
 
+from .InvalidConfigurationOptionValueError import *
+
 try:
     from xdg.BaseDirectory import xdg_config_home, xdg_config_dirs
 
@@ -72,6 +79,9 @@ class RedshiftConfiguration(object):
         "on": True,
         "off": False,
     }
+
+    # Default values for options not treated by Redshift itself
+    _DEFAULT_VALUES = {"redshift-gtk": {"use-appindicator-icon": "1"}}
 
     def determine_configuration_file_path(self, args=[]):
         """Determine path of configuration file or None, if no file could be.
@@ -120,6 +130,8 @@ class RedshiftConfiguration(object):
         try:
             self._parsed_configuration = ConfigParser()
             self._parsed_configuration.read(configuration_file_path)
+            self._validate_configuration(configuration_file_path,
+                                         self._parsed_configuration)
             self._parsed_configuration_is_valid = True
         except Exception as ex:
             self._parsed_configuration = None
@@ -150,6 +162,24 @@ class RedshiftConfiguration(object):
             return self._get_configuration_options_tuple(
                 items, self._parsed_configuration)
 
+    def use_appindicator_icon(self):
+        """Convenience method to return value of option "use-appindicator-icon"
+        in section "redshift-gtk" as Boolean.
+        """
+        default_value = self._DEFAULT_VALUES["redshift-gtk"][
+            "use-appindicator-icon"]
+
+        if not self._is_parsed_configuration():
+            return self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING[default_value]
+
+        if not self._is_valid_configuration():
+            raise ValueError("Parsed configuration is invalid.")
+
+        option_value = self._parsed_configuration.get("redshift-gtk",
+                                                      "use-appindicator-icon",
+                                                      fallback=default_value)
+        return self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING[option_value]
+
     def _is_parsed_configuration(self):
         """Helper to determine if this object represents a parsed 
         configuration.
@@ -168,6 +198,14 @@ class RedshiftConfiguration(object):
         except AttributeError:
             return False
 
+    def _use_appindicator_icon_raw_value(self, parsed_configuration):
+        """Return raw value of option "use-appindicator-icon" in section 
+        "redshift-gtk" or None if the option does not exist in the section.
+        """
+        return parsed_configuration.get("redshift-gtk",
+                                        "use-appindicator-icon",
+                                        fallback=None)
+
     def _get_configuration_options_str(self, section, parsed_configuration):
         """Get configuration options as list of tuples for a single section."""
         section_options = {}
@@ -176,10 +214,21 @@ class RedshiftConfiguration(object):
         except NoSectionError:
             raise KeyError(section)
 
-        return {
+        options = {
             option_name: option_value
             for option_name, option_value in section_options
         }
+
+        # Add missing default values
+        missing_default_values = {}
+        if section in self._DEFAULT_VALUES:
+            default_values_for_section = self._DEFAULT_VALUES[section]
+            missing_default_values = set(default_values_for_section) - options
+
+        for option_name, default_value in missing_default_values:
+            options[option_name] = default_value
+
+        return options
 
     def _get_configuration_options_tuple(self, sections, parsed_configuration):
         """Get configuration options as dictionary (key: section name, value: 
@@ -192,6 +241,31 @@ class RedshiftConfiguration(object):
             result_options[section_name] = configuration_options_for_section
 
         return result_options
+
+    def _validate_configuration(self, configuration_file_path,
+                                parsed_configuration):
+        """Validate options in configuration file that are not validated by 
+        Redshift itself, i.e., which are specifically for redshift-gtk.
+        """
+        self._validate_use_appindicator_icon(configuration_file_path,
+                                             parsed_configuration)
+
+    def _validate_use_appindicator_icon(self, configuration_file_path,
+                                        parsed_configuration):
+        """Validate configuration option "use-appindicator-icon", which must
+        must exhibit a Boolean-like value, i.e., "1", "yes", "true", "on" or
+        "0", "no", "false", "off" (all case-sensitive). See the Python doc on
+        the configparser module for the rationale behind this values."""
+        option_value = self._use_appindicator_icon_raw_value(
+            parsed_configuration)
+        if option_value and not option_value in self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING:
+            raise InvalidConfigurationOptionValueError(
+                configuration_file_path,
+                "redshift-gtk",
+                "use-appindicator-icon",
+                option_value,
+                self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING.keys(),
+            )
 
     def _returns_existing_configuration_file(self, file_path_method):
         """Execute a method that returns a possible configuration file and
@@ -309,6 +383,7 @@ if __name__ == "__main__":
     try:
         config_file_path = rc.determine_configuration_file_path(sys.argv)
         rc.parse_configuration(config_file_path)
+        print(rc.use_appindicator_icon())
     except Exception as ex:
         raise ex
         print(str(ex))
