@@ -5,16 +5,16 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      dist: trusty
+      dist: bionic
       sudo: false
-    - os: osx
-      compiler: clang
 
 addons:
   apt:
     packages:
       - autopoint
       - intltool
+      - libtool
+      - pkg-config
       # DRM
       - libdrm-dev
       # RANDR
@@ -22,48 +22,25 @@ addons:
       - libxcb-randr0-dev
       # VidMode
       - libx11-dev
+      - libxext-dev
       - libxxf86vm-dev
       # GeoClue2
+      - libgeoclue-2-dev
+      - libgconf2-dev
       - libglib2.0-dev
       # GUI
-      - python3
-
-before_install: |
-  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-    brew update
-    brew install gettext
-    brew link --force gettext
-    brew install intltool
-    brew upgrade python
-    
-    # distuninstallcheck fails on macOS when automake 1.16 or 1.16.1 is used.
-    # http://gnu-automake.7480.n7.nabble.com/bug-31222-automake-1-16-1-am-pep3147-tweak-bug-td22937.html
-    # No upstream release yet, use upstream patch.
-    pushd /usr/local/Cellar/automake/*/share/automake-*
-    curl "https://git.savannah.gnu.org/cgit/automake.git/patch/?id=a348d830659fffd2cfc42994524783b07e69b4b5" | tail -n 14 | sudo patch -p2
-    popd
-  fi
+      - python3-dev
 
 install:
   - ./bootstrap
   - mkdir "$TRAVIS_BUILD_DIR/root"
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      ./configure --prefix="$TRAVIS_BUILD_DIR/root" --enable-drm --enable-vidmode --enable-randr --enable-geoclue2 --enable-gui --enable-apparmor
-    elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      ./configure --prefix="$TRAVIS_BUILD_DIR/root" --enable-corelocation --enable-quartz --enable-gui
-    fi
+  - ./configure --prefix="$TRAVIS_BUILD_DIR/root" --enable-drm --enable-vidmode --enable-randr --enable-geoclue2 --enable-gui --enable-apparmor
   - make -j2 install
   - make -j2 distcheck
 
 script:
-  - |
-    "$TRAVIS_BUILD_DIR"/root/bin/redshift -l 12:-34 -pv
-  - |
-    "$TRAVIS_BUILD_DIR"/root/bin/redshift -l 12:-34 -m dummy -vo
-  - |
-    echo -e "[redshift]\ndawn-time=6:30\ndusk-time=18:00-19:30" > time.config
-  - |
-    "$TRAVIS_BUILD_DIR"/root/bin/redshift -c time.config -pv
-  - |
-    "$TRAVIS_BUILD_DIR"/root/bin/redshift -c time.config -m dummy -vo
+  - "$TRAVIS_BUILD_DIR"/root/bin/redshift -l 12:-34 -pv
+  - "$TRAVIS_BUILD_DIR"/root/bin/redshift -l 12:-34 -m dummy -vo
+  - echo -e "[redshift]\ndawn-time=6:30\ndusk-time=18:00-19:30" > time.config
+  - "$TRAVIS_BUILD_DIR"/root/bin/redshift -c time.config -pv
+  - "$TRAVIS_BUILD_DIR"/root/bin/redshift -c time.config -m dummy -vo
