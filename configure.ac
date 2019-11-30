@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([redshift], [1.12], [https://github.com/jonls/redshift/issues])
+AC_INIT([redshift], [1.12.1], [https://github.com/jonls/redshift/issues])
 AC_CONFIG_SRCDIR([src/redshift.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -13,6 +13,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 AC_PROG_CC_C99
 AC_PROG_LIBTOOL
+AC_PROG_MKDIR_P
 AC_PROG_OBJC # For macOS support modules
 AC_LANG([C])
 
@@ -99,7 +100,7 @@ AS_IF([test "x$have_objc_compiler" = xyes], [
 AC_CHECK_HEADER([windows.h], [have_windows_h=yes], [have_windows_h=no])
 
 # Check for Python
-AM_PATH_PYTHON([3.2], [have_python=yes], [have_python=no])
+AM_PATH_PYTHON([3.5], [have_python=yes], [have_python=no])
 
 # Check GTK+ GUI config tool
 AC_MSG_CHECKING([whether to enable GTK+ GUI config tool])
