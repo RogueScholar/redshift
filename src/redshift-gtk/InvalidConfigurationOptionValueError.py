@@ -21,13 +21,13 @@ Redshift's built-in C-based option parser, is invalid.
 
 class InvalidConfigurationOptionValueError(Exception):
     def __init__(
-        self,
-        file_path,
-        section,
-        option,
-        invalid_value,
-        correct_values=[],
-        additional_explanation="",
+            self,
+            file_path,
+            section,
+            option,
+            invalid_value,
+            correct_values=[],
+            additional_explanation="",
     ):
         self.file_path = file_path
         self.section = section
@@ -40,15 +40,13 @@ class InvalidConfigurationOptionValueError(Exception):
         message = (
             "Invalid configuration option value detected for "
             'configuration option "%s" in section "%s" of file "%s": '
-            '"%s"' % (self.option, self.section, self.file_path, self.invalid_value)
-        )
+            '"%s"' %
+            (self.option, self.section, self.file_path, self.invalid_value))
         if self.correct_values:
             correct_values_strings = list(
-                map(lambda value: '"%s"' % value, self.correct_values)
-            )
+                map(lambda value: '"%s"' % value, self.correct_values))
             message += " (correct values would be %s)" % ", ".join(
-                correct_values_strings
-            )
+                correct_values_strings)
 
         message += "."
 

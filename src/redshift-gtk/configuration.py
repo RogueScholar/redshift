@@ -104,13 +104,11 @@ class RedshiftConfiguration(object):
         last_method_index = len(configuration_file_path_methods) - 1
 
         existing_configuration_file_path = None
-        while (
-            method_index <= last_method_index and not existing_configuration_file_path
-        ):
+        while (method_index <= last_method_index
+               and not existing_configuration_file_path):
             method = configuration_file_path_methods[method_index]
             existing_configuration_file_path = self._returns_existing_configuration_file(
-                method
-            )
+                method)
             method_index += 1
 
         return existing_configuration_file_path
@@ -121,14 +119,14 @@ class RedshiftConfiguration(object):
             raise ValueError("No file specified for parsing.")
 
         if not self._file_exists(configuration_file_path):
-            raise ValueError('File "%s" does not exist.' % configuration_file_path)
+            raise ValueError('File "%s" does not exist.' %
+                             configuration_file_path)
 
         try:
             self._parsed_configuration = ConfigParser()
             self._parsed_configuration.read(configuration_file_path)
-            self._validate_configuration(
-                configuration_file_path, self._parsed_configuration
-            )
+            self._validate_configuration(configuration_file_path,
+                                         self._parsed_configuration)
             self._parsed_configuration_is_valid = True
         except Exception as ex:
             self._parsed_configuration = None
@@ -147,27 +145,24 @@ class RedshiftConfiguration(object):
               dictionary (key: section name, value: option dictionary for the
               section).
         """
-        if (
-            not items
-            or (not isinstance(items, str) and not isinstance(items, tuple))
-            or not self._parsed_configuration
-        ):
+        if (not items or
+            (not isinstance(items, str) and not isinstance(items, tuple))
+                or not self._parsed_configuration):
             raise KeyError(items)
 
         if isinstance(items, str):
             return self._get_configuration_options_str(
-                items, self._parsed_configuration
-            )
+                items, self._parsed_configuration)
         elif isinstance(items, tuple):
             return self._get_configuration_options_tuple(
-                items, self._parsed_configuration
-            )
+                items, self._parsed_configuration)
 
     def use_appindicator_icon(self):
         """Convenience method to return value of option "use-appindicator-icon"
         in section "redshift-gtk" as Boolean.
         """
-        default_value = self._DEFAULT_VALUES["redshift-gtk"]["use-appindicator-icon"]
+        default_value = self._DEFAULT_VALUES["redshift-gtk"][
+            "use-appindicator-icon"]
 
         if not self._is_parsed_configuration():
             return self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING[default_value]
@@ -175,9 +170,9 @@ class RedshiftConfiguration(object):
         if not self._is_valid_configuration():
             raise ValueError("Parsed configuration is invalid.")
 
-        option_value = self._parsed_configuration.get(
-            "redshift-gtk", "use-appindicator-icon", fallback=default_value
-        )
+        option_value = self._parsed_configuration.get("redshift-gtk",
+                                                      "use-appindicator-icon",
+                                                      fallback=default_value)
         return self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING[option_value]
 
     def _is_parsed_configuration(self):
@@ -202,9 +197,9 @@ class RedshiftConfiguration(object):
         """Return raw value of option "use-appindicator-icon" in section 
         "redshift-gtk" or None if the option does not exist in the section.
         """
-        return parsed_configuration.get(
-            "redshift-gtk", "use-appindicator-icon", fallback=None
-        )
+        return parsed_configuration.get("redshift-gtk",
+                                        "use-appindicator-icon",
+                                        fallback=None)
 
     def _get_configuration_options_str(self, section, parsed_configuration):
         """Get configuration options as list of tuples for a single section."""
@@ -215,7 +210,8 @@ class RedshiftConfiguration(object):
             raise KeyError(section)
 
         options = {
-            option_name: option_value for option_name, option_value in section_options
+            option_name: option_value
+            for option_name, option_value in section_options
         }
 
         # Add missing default values
@@ -236,28 +232,27 @@ class RedshiftConfiguration(object):
 
         for section_name in sections:
             configuration_options_for_section = self._get_configuration_options_str(
-                section_name, parsed_configuration
-            )
+                section_name, parsed_configuration)
             result_options[section_name] = configuration_options_for_section
 
         return result_options
 
-    def _validate_configuration(self, configuration_file_path, parsed_configuration):
+    def _validate_configuration(self, configuration_file_path,
+                                parsed_configuration):
         """Validate options in configuration file that are not validated by 
         Redshift itself, i.e., which are specifically for redshift-gtk.
         """
-        self._validate_use_appindicator_icon(
-            configuration_file_path, parsed_configuration
-        )
+        self._validate_use_appindicator_icon(configuration_file_path,
+                                             parsed_configuration)
 
-    def _validate_use_appindicator_icon(
-        self, configuration_file_path, parsed_configuration
-    ):
+    def _validate_use_appindicator_icon(self, configuration_file_path,
+                                        parsed_configuration):
         """Validate configuration option "use-appindicator-icon", which must
         must exhibit a Boolean-like value, i.e., "1", "yes", "true", "on" or
         "0", "no", "false", "off" (all case-sensitive). See the Python doc on
         the configparser module for the rationale behind this values."""
-        option_value = self._use_appindicator_icon_raw_value(parsed_configuration)
+        option_value = self._use_appindicator_icon_raw_value(
+            parsed_configuration)
         if option_value and not option_value in self._BOOLEAN_LIKE_OPTION_VALUE_MAPPING:
             raise InvalidConfigurationOptionValueError(
                 configuration_file_path,
