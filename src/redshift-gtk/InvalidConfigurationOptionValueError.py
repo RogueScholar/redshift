@@ -24,28 +24,29 @@ file parser (configuration.py) only if a value, that is not validated by
 Redshift's built-in C-based option parser, is invalid.
 """
 
+
 class InvalidConfigurationOptionValueError(Exception):
-    def __init__(self, file_path, section, option, invalid_value, 
-        correct_values=[], additional_explanation=''):
-            self.file_path = file_path
-            self.section = section
-            self.option = option
-            self.invalid_value = invalid_value
-            self.correct_values = correct_values
-            self.additional_explanation = additional_explanation
+    def __init__(self, file_path, section, option, invalid_value,
+                 correct_values=[], additional_explanation=''):
+        self.file_path = file_path
+        self.section = section
+        self.option = option
+        self.invalid_value = invalid_value
+        self.correct_values = correct_values
+        self.additional_explanation = additional_explanation
 
     def __str__(self):
         message = 'Invalid configuration option value detected for ' \
             'configuration option "%s" in section "%s" of file "%s": ' \
-            '"%s"' % (self.option, self.section, self.file_path, 
-                self.invalid_value)
+            '"%s"' % (self.option, self.section, self.file_path,
+                      self.invalid_value)
         if self.correct_values:
             correct_values_strings = list(
                 map(lambda value: '"%s"' % value, self.correct_values)
             )
             message += ' (correct values would be %s)' % \
                 ', '.join(correct_values_strings)
-        
+
         message += '.'
 
         if self.additional_explanation:

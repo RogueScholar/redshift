@@ -23,6 +23,11 @@ The run method will try to start an appindicator for Redshift. If the
 appindicator module isn't present it will fall back to a GTK status icon.
 """
 
+from . import utils
+from . import defs
+from .controller import RedshiftController
+from .configuration import RedshiftConfiguration
+from gi.repository import Gtk, GLib
 import sys
 import signal
 import gettext
@@ -30,7 +35,6 @@ import gettext
 import gi
 gi.require_version('Gtk', '3.0')
 
-from gi.repository import Gtk, GLib
 
 try:
     gi.require_version('AppIndicator3', '0.1')
@@ -38,10 +42,6 @@ try:
 except (ImportError, ValueError):
     appindicator = None
 
-from .configuration import RedshiftConfiguration
-from .controller import RedshiftController
-from . import defs
-from . import utils
 
 _ = gettext.gettext
 
@@ -55,7 +55,7 @@ class RedshiftStatusIcon(object):
         self._controller = controller
         use_appindicator_icon = self._config_use_appindicator_icon()
         if not use_appindicator_icon:
-            global appindicator 
+            global appindicator
             appindicator = None
 
         if appindicator:
@@ -199,7 +199,7 @@ class RedshiftStatusIcon(object):
                 Gtk.ButtonsType.CLOSE, '')
             error_dialog.set_markup(
                 '<b>Failed to parse configuration</b>\n<i>' + str(ex) + '</i>')
-            error_dialog.run()        
+            error_dialog.run()
             return True
 
     def remove_suspend_timer(self):
