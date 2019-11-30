@@ -60,6 +60,7 @@ from configparser import ConfigParser, NoSectionError
 
 try:
     from xdg.BaseDirectory import xdg_config_home, xdg_config_dirs
+
     has_xdg = True
 except ImportError:
     has_xdg = False
@@ -70,17 +71,14 @@ class RedshiftConfiguration(object):
 
     # According to the Python doc of the configparser module
     _BOOLEAN_LIKE_OPTION_VALUE_MAPPING = {
-        '1': True,
-        '0': False,
-
-        'yes': True,
-        'no': False,
-
-        'true': True,
-        'false': False,
-
-        'on': True,
-        'off': False
+        "1": True,
+        "0": False,
+        "yes": True,
+        "no": False,
+        "true": True,
+        "false": False,
+        "on": True,
+        "off": False,
     }
 
     def determine_configuration_file_path(self, args=[]):
@@ -94,7 +92,7 @@ class RedshiftConfiguration(object):
             self._args = args[1:]
 
         self._argument_parser = argparse.ArgumentParser()
-        self._argument_parser.add_argument('-c', dest='configuration_file')
+        self._argument_parser.add_argument("-c", dest="configuration_file")
 
         configuration_file_path_methods = [
             self._configuration_file_path_from_command_line,
@@ -103,17 +101,19 @@ class RedshiftConfiguration(object):
             self._configuration_file_path_from_env_home,
             self._nix_configuration_file_path_from_home,
             self._nix_configuration_file_path_from_xdg_config_dirs,
-            self._nix_configuration_file_path_from_etc
+            self._nix_configuration_file_path_from_etc,
         ]
         method_index = 0
         last_method_index = len(configuration_file_path_methods) - 1
 
         existing_configuration_file_path = None
-        while method_index <= last_method_index \
-                and not existing_configuration_file_path:
+        while (
+            method_index <= last_method_index and not existing_configuration_file_path
+        ):
             method = configuration_file_path_methods[method_index]
-            existing_configuration_file_path = \
-                self._returns_existing_configuration_file(method)
+            existing_configuration_file_path = self._returns_existing_configuration_file(
+                method
+            )
             method_index += 1
 
         return existing_configuration_file_path
@@ -121,11 +121,10 @@ class RedshiftConfiguration(object):
     def parse_configuration(self, configuration_file_path):
         """Parse existing configuration file."""
         if not configuration_file_path:
-            raise ValueError('No file specified for parsing.')
+            raise ValueError("No file specified for parsing.")
 
         if not self._file_exists(configuration_file_path):
-            raise ValueError('File "%s" does not exist.' %
-                             configuration_file_path)
+            raise ValueError('File "%s" does not exist.' % configuration_file_path)
 
         try:
             self._parsed_configuration = ConfigParser()
@@ -148,17 +147,21 @@ class RedshiftConfiguration(object):
               dictionary (key: section name, value: option dictionary for the
               section).
         """
-        if not items \
-                or (not isinstance(items, str) and not isinstance(items, tuple)) \
-                or not self._parsed_configuration:
+        if (
+            not items
+            or (not isinstance(items, str) and not isinstance(items, tuple))
+            or not self._parsed_configuration
+        ):
             raise KeyError(items)
 
         if isinstance(items, str):
-            return self._get_configuration_options_str(items,
-                                                       self._parsed_configuration)
+            return self._get_configuration_options_str(
+                items, self._parsed_configuration
+            )
         elif isinstance(items, tuple):
-            return self._get_configuration_options_tuple(items,
-                                                         self._parsed_configuration)
+            return self._get_configuration_options_tuple(
+                items, self._parsed_configuration
+            )
 
     def _is_parsed_configuration(self):
         """Helper to determine if this object represents a parsed 
@@ -174,8 +177,7 @@ class RedshiftConfiguration(object):
         configuration.
         """
         try:
-            return self._is_parsed_configuration \
-                and self._parsed_configuration_is_valid
+            return self._is_parsed_configuration and self._parsed_configuration_is_valid
         except AttributeError:
             return False
 
@@ -187,8 +189,9 @@ class RedshiftConfiguration(object):
         except NoSectionError:
             raise KeyError(section)
 
-        return {option_name: option_value
-                for option_name, option_value in section_options}
+        return {
+            option_name: option_value for option_name, option_value in section_options
+        }
 
     def _get_configuration_options_tuple(self, sections, parsed_configuration):
         """Get configuration options as dictionary (key: section name, value: 
@@ -196,9 +199,9 @@ class RedshiftConfiguration(object):
         result_options = {}
 
         for section_name in sections:
-            configuration_options_for_section = \
-                self._get_configuration_options_str(section_name,
-                                                    parsed_configuration)
+            configuration_options_for_section = self._get_configuration_options_str(
+                section_name, parsed_configuration
+            )
             result_options[section_name] = configuration_options_for_section
 
         return result_options
@@ -228,18 +231,18 @@ class RedshiftConfiguration(object):
     def _configuration_file_path_from_xdg_config_home(self):
         """Path for configuration file in XDG_CONFIG_HOME."""
         if has_xdg and xdg_config_home:
-            return os.path.join(xdg_config_home, 'redshift.conf')
+            return os.path.join(xdg_config_home, "redshift.conf")
         else:
             return None
 
     def _windows_configuration_file_path_from_localappdata(self):
         """Windows only: Path for configuration file in localappdata."""
-        if platform.system() != 'Windows':
+        if platform.system() != "Windows":
             return None
 
-        localappdata_folder = os.environ.get('localappdata')
+        localappdata_folder = os.environ.get("localappdata")
         if localappdata_folder:
-            return os.path.join(localappdata_folder, 'redshift.conf')
+            return os.path.join(localappdata_folder, "redshift.conf")
         else:
             return None
 
@@ -247,9 +250,9 @@ class RedshiftConfiguration(object):
         """Path for configuration file at the place determined by the HOME 
         environment variable.
         """
-        home_folder = os.environ.get('HOME')
+        home_folder = os.environ.get("HOME")
         if home_folder:
-            return os.path.join(home_folder, '.config', 'redshift.conf')
+            return os.path.join(home_folder, ".config", "redshift.conf")
         else:
             return None
 
@@ -258,9 +261,9 @@ class RedshiftConfiguration(object):
         if not self._is_unix_like_platform:
             return None
 
-        home_folder = os.environ.get('HOME')
+        home_folder = os.environ.get("HOME")
         if home_folder:
-            return os.path.join(home_folder, '.config', 'redshift.conf')
+            return os.path.join(home_folder, ".config", "redshift.conf")
         else:
             return None
 
@@ -270,7 +273,7 @@ class RedshiftConfiguration(object):
             return None
 
         if has_xdg and xdg_config_dirs:
-            return [os.path.join(d, 'redshift.conf') for d in xdg_config_dirs]
+            return [os.path.join(d, "redshift.conf") for d in xdg_config_dirs]
         else:
             return None
 
@@ -279,11 +282,11 @@ class RedshiftConfiguration(object):
         if not self._is_unix_like_platform:
             return None
 
-        return os.path.join(' ', 'etc', 'redshift.conf').lstrip()
+        return os.path.join(" ", "etc", "redshift.conf").lstrip()
 
     def _is_unix_like_platform(self):
         """Determine if the platform on which Redshift runs, is Unix-like."""
-        non_unix_like_platforms = ['win32', 'cygwin']
+        non_unix_like_platforms = ["win32", "cygwin"]
 
         # We use sys.platform() instead of platform.system(), because,
         # according to the Python docs, it seems that it's non Unix-like return
@@ -314,7 +317,7 @@ class RedshiftConfiguration(object):
             return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rc = RedshiftConfiguration()
     try:
         config_file_path = rc.determine_configuration_file_path(sys.argv)
